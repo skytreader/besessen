@@ -84,14 +84,9 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
             if self.__should_observe(event.dest_path):
                 self.__compile(event.dest_path)
 
-class TSCompiler(CompileEventHandler):
-
-    def __init__(sefl, build_dir):
-        super().__init__(build_dir, ("ts",))
-    
-    def __to_js(self, filename):
+    def _change_extension_to(self, newext, filename):
         """
-        Assumes that you give it ".ts" files and changes the extension to ".js".
+        Changes the extension of `filename` to `newext`.
         """
         filename_parse = filename.split(".")
         sans_extension = ".".join(filename_parse[0:-1])
@@ -99,12 +94,29 @@ class TSCompiler(CompileEventHandler):
             sans_extension_parse = sans_extension.split("/")
             sans_extension_parse[-2] = self.build_dir
             sans_extension = "/".join(sans_extension_parse)
-        return sans_extension + ".js"
+        return sans_extension + newext
+
+class TSCompiler(CompileEventHandler):
+
+    def __init__(self, build_dir):
+        super().__init__(build_dir, ("ts",))
     
     def compile(self, src):
-        outfile = self.__to_js(src)
+        outfile = self._change_extension_to(".js", src)
         subprocess.call([
             "node_modules/typescript/bin/tsc", "--lib", "es2015,es2015.iterable,dom", "--outFile", outfile, src
+        ])
+        logging.info("compiled %s to %s" % (src, outfile))
+
+class LessCompiler(CompileEventHandler):
+
+    def __init__(self, build_dir):
+        super().__init__(build_dir, ("less",))
+
+    def compile(self, src):
+        outfile = self._change_extension_to(".css", src)
+        subprocess.call([
+            "node_modules/less/bin/lessc", src, outfile
         ])
         logging.info("compiled %s to %s" % (src, outfile))
 
@@ -114,7 +126,8 @@ if __name__ == "__main__":
                         datefmt='%Y-%m-%d %H:%M:%S')
     path = sys.argv[1] if len(sys.argv) > 1 else '.'
     observer = Observer()
-    observer.schedule(CompileEventHandler("jsbuild"), path, recursive=True)
+    observer.schedule(TSCompiler("jsbuild"), path, recursive=True)
+    observer.schedule(LessCompiler("css"), path, recursive=True)
     observer.start()
     logging.info("Watching directory...")
     try:
