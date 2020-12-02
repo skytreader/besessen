@@ -10,4 +10,4 @@ Supports:
 
 ## Usage
 
-Copy the script to your directory and run.
+Install dependencies, copy script to your directory, and run.
