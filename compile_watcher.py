@@ -3,7 +3,7 @@ import time
 import logging
 import os
 import subprocess
-from abc import ABC
+from abc import ABC, abstractmethod
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, LoggingEventHandler
 
