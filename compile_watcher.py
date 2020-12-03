@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 from abc import ABC, abstractmethod
+from typing import Tuple
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, LoggingEventHandler
 
@@ -18,7 +19,9 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
     def __init__(self, build_dir=None, file_exts=()):
         super(CompileEventHandler, self).__init__()
         self.build_dir = build_dir[0:-1] if build_dir and build_dir[-1] == "/" else build_dir
-        self.extensions = ((x if x.startswith(".") else "." + x) for x in file_exts)
+        self.extensions: Tuple[str, ...] = tuple(
+            (x if x.startswith(".") else "." + x) for x in file_exts
+        )
 
         if os.path.exists(self.build_dir):
             if not os.path.isdir(self.build_dir):
@@ -89,6 +92,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         """
         Changes the extension of `filename` to `newext`.
         """
+        newext = newext if newext[0] == "." else "." + newext
         filename_parse = filename.split(".")
         sans_extension = ".".join(filename_parse[0:-1])
         if self.build_dir:
