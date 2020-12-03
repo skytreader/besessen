@@ -8,8 +8,9 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, LoggingEventHandler
 
 """
-This script watches all Typescript files in the current directory and compiles
-them if and when they change.
+ObsESsively watches your filesystem for node-related files to compile.
+
+Find me at https://github.com/skytreader/besessen
 """
 
 class CompileEventHandler(FileSystemEventHandler, ABC):
