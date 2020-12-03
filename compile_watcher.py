@@ -55,24 +55,24 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         subprocess.call(["rm", outfile])
         logging.info("deleted %s" % outfile)
 
-    def __is_ts_event(self, event):
+    def __is_filesys_ev(self, event):
         return not event.is_directory and self.__should_observe(event.src_path)
 
     def on_created(self, event):
         super(CompileEventHandler, self).on_created(event)
-        if self.__is_ts_event(event):
+        if self.__is_filesys_ev(event):
             logging.debug("TS created event %s" % event)
             self.__compile(event.src_path)
 
     def on_deleted(self, event):
         super(CompileEventHandler, self).on_deleted(event)
-        if self.__is_ts_event(event):
+        if self.__is_filesys_ev(event):
             logging.debug("TS delete event %s" % event)
             self.__delete(event.src_path)
 
     def on_modified(self, event):
         super(CompileEventHandler, self).on_modified(event)
-        if self.__is_ts_event(event):
+        if self.__is_filesys_ev(event):
             logging.debug("TS modified event %s" % event)
             self.__compile(event.src_path)
 
@@ -82,7 +82,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         extension.
         """
         super(CompileEventHandler, self).on_moved(event)
-        if self.__is_ts_event(event):
+        if self.__is_filesys_ev(event):
             logging.debug("TS moved event %s" % event)
             self.__delete(event.src_path)
             if self.__should_observe(event.dest_path):
