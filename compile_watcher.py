@@ -63,7 +63,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         super(CompileEventHandler, self).on_created(event)
         if self.__is_filesys_ev(event):
             logging.debug("TS created event %s" % event)
-            self.__compile(event.src_path)
+            self.compile(event.src_path)
 
     def on_deleted(self, event):
         super(CompileEventHandler, self).on_deleted(event)
@@ -75,7 +75,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         super(CompileEventHandler, self).on_modified(event)
         if self.__is_filesys_ev(event):
             logging.debug("TS modified event %s" % event)
-            self.__compile(event.src_path)
+            self.compile(event.src_path)
 
     def on_moved(self, event):
         """
@@ -87,7 +87,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
             logging.debug("TS moved event %s" % event)
             self.__delete(event.src_path)
             if self.__should_observe(event.dest_path):
-                self.__compile(event.dest_path)
+                self.compile(event.dest_path)
 
     def _change_extension(self, filename):
         """
@@ -106,7 +106,7 @@ class TSCompiler(CompileEventHandler):
 
     def __init__(self, build_dir):
         super().__init__(build_dir, ("ts",))
-        self._compile_to_ext = ".js"
+        self._compiles_to_ext = ".js"
     
     def compile(self, src):
         outfile = self._change_extension(src)
@@ -119,7 +119,7 @@ class LessCompiler(CompileEventHandler):
 
     def __init__(self, build_dir):
         super().__init__(build_dir, ("less",))
-        self._compile_to_ext = ".css"
+        self._compiles_to_ext = ".css"
 
     def compile(self, src):
         outfile = self._change_extension(src)
