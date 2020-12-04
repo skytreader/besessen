@@ -22,6 +22,8 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         self.extensions: Tuple[str, ...] = tuple(
             (x if x.startswith(".") else "." + x) for x in file_exts
         )
+        # Set this property for the extension of the compiled files.
+        self._compiles_to_ext: str = ""
 
         if os.path.exists(self.build_dir):
             if not os.path.isdir(self.build_dir):
@@ -51,9 +53,8 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         pass
     
     def __delete(self, fname):
-        outfile = self.__to_js(fname)
-        subprocess.call(["rm", outfile])
-        logging.info("deleted %s" % outfile)
+        subprocess.call(["rm", fname])
+        logging.info("deleted %s" % fname)
 
     def __is_filesys_ev(self, event):
         return not event.is_directory and self.__should_observe(event.src_path)
@@ -68,7 +69,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         super(CompileEventHandler, self).on_deleted(event)
         if self.__is_filesys_ev(event):
             logging.debug("TS delete event %s" % event)
-            self.__delete(event.src_path)
+            self.__delete(self._change_extension(event.src_path))
 
     def on_modified(self, event):
         super(CompileEventHandler, self).on_modified(event)
@@ -88,11 +89,11 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
             if self.__should_observe(event.dest_path):
                 self.__compile(event.dest_path)
 
-    def _change_extension_to(self, newext, filename):
+    def _change_extension(self, filename):
         """
         Changes the extension of `filename` to `newext`.
         """
-        newext = newext if newext[0] == "." else "." + newext
+        newext = self._compiles_to_ext if self._compiles_to_ext[0] == "." else "." + self._compiles_to_ext
         filename_parse = filename.split(".")
         sans_extension = ".".join(filename_parse[0:-1])
         if self.build_dir:
@@ -105,9 +106,10 @@ class TSCompiler(CompileEventHandler):
 
     def __init__(self, build_dir):
         super().__init__(build_dir, ("ts",))
+        self._compile_to_ext = ".js"
     
     def compile(self, src):
-        outfile = self._change_extension_to(".js", src)
+        outfile = self._change_extension(src)
         subprocess.call([
             "node_modules/typescript/bin/tsc", "--lib", "es2015,es2015.iterable,dom", "--outFile", outfile, src
         ])
@@ -117,9 +119,10 @@ class LessCompiler(CompileEventHandler):
 
     def __init__(self, build_dir):
         super().__init__(build_dir, ("less",))
+        self._compile_to_ext = ".css"
 
     def compile(self, src):
-        outfile = self._change_extension_to(".css", src)
+        outfile = self._change_extension(src)
         subprocess.call([
             "node_modules/less/bin/lessc", src, outfile
         ])
