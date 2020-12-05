@@ -14,6 +14,8 @@ ObsESsively watches your filesystem for node-related files to compile.
 Find me at https://github.com/skytreader/besessen
 """
 
+logging.getLogger().setLevel(int(os.environ.get("BESLL", logging.info)))
+
 class CompileEventHandler(FileSystemEventHandler, ABC):
 
     def __init__(self, build_dir=None, file_exts=()):
@@ -129,9 +131,10 @@ class LessCompiler(CompileEventHandler):
         logging.info("compiled %s to %s" % (src, outfile))
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s - %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
+    logging.basicConfig(
+        format='%(asctime)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
     path = sys.argv[1] if len(sys.argv) > 1 else '.'
     observer = Observer()
     observer.schedule(TSCompiler("jsbuild"), path, recursive=True)
