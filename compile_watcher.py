@@ -14,7 +14,7 @@ ObsESsively watches your filesystem for node-related files to compile.
 Find me at https://github.com/skytreader/besessen
 """
 
-logging.getLogger().setLevel(int(os.environ.get("BESLL", logging.info)))
+logging.getLogger().setLevel(int(os.environ.get("BESLL", logging.INFO)))
 
 class CompileEventHandler(FileSystemEventHandler, ABC):
 
