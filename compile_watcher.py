@@ -64,19 +64,19 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
     def on_created(self, event):
         super(CompileEventHandler, self).on_created(event)
         if self.__is_filesys_ev(event):
-            logging.debug("TS created event %s" % event)
+            logging.debug("detected created event %s" % event)
             self.compile(event.src_path)
 
     def on_deleted(self, event):
         super(CompileEventHandler, self).on_deleted(event)
         if self.__is_filesys_ev(event):
-            logging.debug("TS delete event %s" % event)
+            logging.debug("detected delete event %s" % event)
             self.__delete(self._change_extension(event.src_path))
 
     def on_modified(self, event):
         super(CompileEventHandler, self).on_modified(event)
         if self.__is_filesys_ev(event):
-            logging.debug("TS modified event %s" % event)
+            logging.debug("detected modified event %s" % event)
             self.compile(event.src_path)
 
     def on_moved(self, event):
@@ -86,7 +86,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         """
         super(CompileEventHandler, self).on_moved(event)
         if self.__is_filesys_ev(event):
-            logging.debug("TS moved event %s" % event)
+            logging.debug("detected moved event %s" % event)
             self.__delete(event.src_path)
             if self.__should_observe(event.dest_path):
                 self.compile(event.dest_path)
