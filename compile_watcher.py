@@ -87,7 +87,7 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         super(CompileEventHandler, self).on_moved(event)
         if self.__is_filesys_ev(event):
             logging.debug("detected moved event %s" % event)
-            self.__delete(event.src_path)
+            self.__delete(self._change_extension(event.src_path))
             if self.__should_observe(event.dest_path):
                 self.compile(event.dest_path)
 
