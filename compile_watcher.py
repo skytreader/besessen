@@ -33,16 +33,18 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         else:
             logging.info("No build directory found. Building for the first time...")
             os.mkdir(self.build_dir)
-            for dirpath, dirnames, filenames in os.walk("."):
-                split_path = dirpath.split(os.sep)
-                if len(split_path) > 1:
-                    if dirpath.split(os.sep)[1] == "node_modules":
-                        continue
 
-                for name in filenames:
-                    if self.__should_observe(name):
-                        fullfilename = os.path.join(dirpath, name)
-                        self.compile(fullfilename)
+    def _compile_all(self):
+        for dirpath, dirnames, filenames in os.walk("."):
+            split_path = dirpath.split(os.sep)
+            if len(split_path) > 1:
+                if dirpath.split(os.sep)[1] == "node_modules":
+                    continue
+
+            for name in filenames:
+                if self.__should_observe(name):
+                    fullfilename = os.path.join(dirpath, name)
+                    self.compile(fullfilename)
 
     def __should_observe(self, fname):
         for extension in self.extensions:
@@ -109,12 +111,14 @@ class TSCompiler(CompileEventHandler):
     def __init__(self, build_dir):
         super().__init__(build_dir, ("ts",))
         self._compiles_to_ext = ".js"
+        self._compile_all()
     
     def compile(self, src):
         outfile = self._change_extension(src)
         subprocess.call([
             "node_modules/typescript/bin/tsc", "--lib", "es2015,es2015.iterable,dom", "--outFile", outfile, src
         ])
+        # This could be lying if the subprocess call failed.
         logging.info("compiled %s to %s" % (src, outfile))
 
 class LessCompiler(CompileEventHandler):
@@ -122,6 +126,7 @@ class LessCompiler(CompileEventHandler):
     def __init__(self, build_dir):
         super().__init__(build_dir, ("less",))
         self._compiles_to_ext = ".css"
+        self._compile_all()
 
     def compile(self, src):
         outfile = self._change_extension(src)
