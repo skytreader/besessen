@@ -107,6 +107,12 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
             sans_extension = "/".join(sans_extension_parse)
         return sans_extension + newext
 
+    def send_notif(self, title, msg):
+        n = Notify()
+        n.title = title
+        n.message = msg
+        n.send()
+
 class TSCompiler(CompileEventHandler):
 
     def __init__(self, build_dir):
@@ -131,14 +137,16 @@ class LessCompiler(CompileEventHandler):
 
     def compile(self, src):
         outfile = self._change_extension(src)
-        subprocess.check_output(" ".join([
-            "./node_modules/less/bin/lessc", src, outfile
-        ]), shell=True)
-        logging.info("compiled %s to %s" % (src, outfile))
-        n = Notify()
-        n.title = src
-        n.message = "compiled to %s" % outfile
-        n.send()
+        try:
+            subprocess.check_output(" ".join([
+                "./node_modules/less/bin/lessc", src, outfile
+            ]), shell=True)
+            logging.info("compiled %s to %s" % (src, outfile))
+            self.send_notif(src, "compiled to %s" % outfile)
+        except subprocess.CalledProcessError as cpe:
+            logging.error("failed to compile %s" % src)
+            logging.error(cpe.output)
+            self.send_notif("failure: %s" % src, cpe.output)
 
 if __name__ == "__main__":
     logging.basicConfig(
