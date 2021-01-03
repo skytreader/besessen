@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 from abc import ABC, abstractmethod
+from notifypy import Notify
 from typing import Tuple
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, LoggingEventHandler
@@ -130,10 +131,14 @@ class LessCompiler(CompileEventHandler):
 
     def compile(self, src):
         outfile = self._change_extension(src)
-        subprocess.call([
-            "node_modules/less/bin/lessc", src, outfile
-        ])
+        subprocess.check_output(" ".join([
+            "./node_modules/less/bin/lessc", src, outfile
+        ]), shell=True)
         logging.info("compiled %s to %s" % (src, outfile))
+        n = Notify()
+        n.title = src
+        n.message = "compiled to %s" % outfile
+        n.send()
 
 if __name__ == "__main__":
     logging.basicConfig(
