@@ -122,11 +122,17 @@ class TSCompiler(CompileEventHandler):
     
     def compile(self, src):
         outfile = self._change_extension(src)
-        subprocess.call([
-            "node_modules/typescript/bin/tsc", "--lib", "es2015,es2015.iterable,dom", "--outFile", outfile, src
-        ])
-        # This could be lying if the subprocess call failed.
-        logging.info("compiled %s to %s" % (src, outfile))
+        try:
+            subprocess.check_output(
+                "./node_modules/typescript/bin/tsc --lib es2015,es2015.iterable,dom --outFile %s %s" % (outfile, src),
+                shell=True
+            )
+            logging.info("compiled %s to %s" % (src, outfile))
+            self.send_notif(src, "compiled to %s" % outfile)
+        except subprocess.CalledProcessError as cpe:
+            logging.error("failed to compile %s" % src)
+            logging.error(cpe.output)
+            self.send_notif("failure: %s" % src, cpe.output)
 
 class LessCompiler(CompileEventHandler):
 
@@ -138,9 +144,10 @@ class LessCompiler(CompileEventHandler):
     def compile(self, src):
         outfile = self._change_extension(src)
         try:
-            subprocess.check_output(" ".join([
-                "./node_modules/less/bin/lessc", src, outfile
-            ]), shell=True)
+            subprocess.check_output(
+                "./node_modules/less/bin/lessc %s %s" % (src, outfile),
+                shell=True
+            )
             logging.info("compiled %s to %s" % (src, outfile))
             self.send_notif(src, "compiled to %s" % outfile)
         except subprocess.CalledProcessError as cpe:
