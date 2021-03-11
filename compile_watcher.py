@@ -28,12 +28,13 @@ class CompileEventHandler(FileSystemEventHandler, ABC):
         # Set this property for the extension of the compiled files.
         self._compiles_to_ext: str = ""
 
-        if os.path.exists(self.build_dir):
-            if not os.path.isdir(self.build_dir):
-                logging.error("Given build dir (%s) is not a directory." % (self.build_dir))
-        else:
-            logging.info("No build directory found. Building for the first time...")
-            os.mkdir(self.build_dir)
+        if build_dir is not None:
+            if os.path.exists(self.build_dir):
+                if not os.path.isdir(self.build_dir):
+                    logging.error("Given build dir (%s) is not a directory." % (self.build_dir))
+            else:
+                logging.info("No build directory found. Building for the first time...")
+                os.mkdir(self.build_dir)
 
     def _compile_all(self):
         for dirpath, dirnames, filenames in os.walk("."):
@@ -155,6 +156,31 @@ class LessCompiler(CompileEventHandler):
             logging.error(cpe.output)
             self.send_notif("failure: %s" % src, cpe.output)
 
+# This is so custom. Maybe a plugin system?
+class JinjaCMSCompiler(CompileEventHandler):
+
+    def __init__(self):
+        """
+        build_dir does not matter here because all that info is encoded in
+        cms.json.
+        """
+        super().__init__(None, ("jinja", "j2"))
+        self._compiles_to_ext = "html"
+        self._compile_all()
+
+    def compile(self, src):
+        try:
+            subprocess.check_output(
+                "/home/chad/.virtualenvs/neocities-cms/bin/python ../cms.py cms.json",
+                shell=True
+            )
+            logging.info("Invoked cms for %s" % src)
+            self.send_notif(src, "Triggered a cms call.")
+        except subprocess.CalledProcessError as cpe:
+            logging.error("failed to compile %s" % src)
+            logging.error(cpe.output)
+            self.send_notif("failure: %s" % src, cpe.output)
+
 if __name__ == "__main__":
     logging.basicConfig(
         format='%(asctime)s - %(message)s',
@@ -164,6 +190,7 @@ if __name__ == "__main__":
     observer = Observer()
     observer.schedule(TSCompiler("jsbuild"), path, recursive=True)
     observer.schedule(LessCompiler("css"), path, recursive=True)
+    observer.schedule(JinjaCMSCompiler(), path, recursive=True)
     observer.start()
     logging.info("Watching directory...")
     try:
